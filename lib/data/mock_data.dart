@@ -380,7 +380,22 @@ class MockData {
 
   static String dkbAccountIban(String kontonummer) {
     final padded = kontonummer.padLeft(10, '0');
-    return 'DE49120300000$padded';
+    final bban = '12030000$padded';
+    return _ibanWithCheckDigit(bban);
+  }
+
+  // Computes a valid IBAN from a BBAN using the ISO 13616 mod-97 algorithm.
+  static String _ibanWithCheckDigit(String bban) {
+    final numeric = (bban + 'DE00').replaceAllMapped(
+      RegExp(r'[A-Z]'),
+      (m) => (m.group(0)!.codeUnitAt(0) - 55).toString(),
+    );
+    var r = 0;
+    for (final ch in numeric.runes) {
+      r = (r * 10 + ch - 48) % 97;
+    }
+    final checkDigit = (98 - r).toString().padLeft(2, '0');
+    return 'DE$checkDigit$bban';
   }
 
   static List<Beneficiary> beneficiaries = [
@@ -388,7 +403,7 @@ class MockData {
       id: 'ben-001',
       name: 'Klaus Mustermann',
       kontonummer: '87654321',
-      iban: 'DE49120300000087654321',
+      iban: 'DE57120300000087654321',
       bic: 'SSKMDEMMXXX',
       verknuepftAm: DateTime(2025, 11, 15),
     ),
