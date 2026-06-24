@@ -285,7 +285,7 @@ class _DkbConnectSheetState extends State<DkbConnectSheet> {
                 return null;
               },
               decoration: const InputDecoration(
-                hintText: 'z. B. 87654321',
+                hintText: 'Kontonummer (8 Stellen)',
                 prefixIcon:
                     Icon(Icons.person_outline, color: DkbColors.textMuted),
               ),
@@ -330,43 +330,6 @@ class _DkbConnectSheetState extends State<DkbConnectSheet> {
                     color: DkbColors.textMuted,
                   ),
                 ),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Demo hint
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: DkbColors.accent.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                    color: DkbColors.accent.withValues(alpha: 0.15)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Demo-Testkonten zum Verknüpfen:',
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: DkbColors.accent,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '• Klaus Mustermann → 87654321 / PIN 5678\n'
-                    '• Anna Schmidt → 11223344 / PIN 4321\n'
-                    '• Thomas Weber → 55667788 / PIN 9999',
-                    style: GoogleFonts.ibmPlexMono(
-                      fontSize: 11,
-                      color: DkbColors.accent,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
               ),
             ),
 

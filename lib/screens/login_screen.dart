@@ -261,34 +261,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               : const Text('Anmelden'),
                         ),
 
-                        const SizedBox(height: 24),
-
-                        // Demo hint
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: DkbColors.accent.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(DkbRadius.sm),
-                            border: Border.all(
-                                color: DkbColors.accent.withValues(alpha: 0.2)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.info_outline,
-                                  color: DkbColors.accent, size: 16),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Demo: Kontonummer 12345678 · PIN 1234',
-                                  style: GoogleFonts.inter(
-                                    color: DkbColors.accent,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                       ],
                     ),
                   ),
