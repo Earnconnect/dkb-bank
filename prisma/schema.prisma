@@ -1,0 +1,105 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String    @id @default(cuid())
+  kontonummer String    @unique
+  pinHash     String
+  name        String
+  email       String?
+  adresse     String?
+  kundeSeit   DateTime  @default(now())
+
+  girokonto   Girokonto?
+  visaKarte   VisaKarte?
+}
+
+model Girokonto {
+  id                  String         @id @default(cuid())
+  iban                String         @unique
+  bic                 String
+  kontonummer         String
+  saldo               Float          @default(0)
+  verfuegbar          Float          @default(0)
+  ueberziehungsrahmen Float          @default(0)
+
+  userId              String         @unique
+  user                User           @relation(fields: [userId], references: [id])
+
+  umsaetze            Umsatz[]
+  dauerauftraege      Dauerauftrag[]
+  beneficiaries       Beneficiary[]
+}
+
+model VisaKarte {
+  id                       String   @id @default(cuid())
+  kartenNummer             String   @unique
+  ablaufdatum              String
+  karteninhaber            String
+  kreditlimit              Float
+  aktuellerSaldo           Float    @default(0)
+  unbezahlt                Float    @default(0)
+  abrechnungsperiodeBeginn DateTime
+  abrechnungsperiodeEnde   DateTime
+  gesperrt                 Boolean  @default(false)
+
+  userId                   String   @unique
+  user                     User     @relation(fields: [userId], references: [id])
+
+  umsaetze                 Umsatz[]
+}
+
+model Umsatz {
+  id               String     @id @default(cuid())
+  buchungsdatum    DateTime
+  wertstellung     DateTime
+  auftraggeber     String
+  empfaenger       String
+  verwendungszweck String
+  betrag           Float
+  typ              String
+  kategorie        String?
+  referenznummer   String?
+  createdAt        DateTime   @default(now())
+
+  girokontoId      String?
+  girokonto        Girokonto? @relation(fields: [girokontoId], references: [id])
+
+  visaKarteId      String?
+  visaKarte        VisaKarte? @relation(fields: [visaKarteId], references: [id])
+}
+
+model Dauerauftrag {
+  id                  String    @id @default(cuid())
+  empfaengerName      String
+  iban                String
+  bic                 String
+  betrag              Float
+  verwendungszweck    String
+  turnus              String
+  naechsteAusfuehrung DateTime
+  isAktiv             Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+
+  girokontoId         String
+  girokonto           Girokonto @relation(fields: [girokontoId], references: [id])
+}
+
+model Beneficiary {
+  id           String    @id @default(cuid())
+  name         String
+  kontonummer  String
+  iban         String
+  bic          String
+  verknuepftAm DateTime  @default(now())
+
+  girokontoId  String
+  girokonto    Girokonto @relation(fields: [girokontoId], references: [id])
+}

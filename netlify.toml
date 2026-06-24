@@ -1,9 +1,17 @@
 [build]
-  command = "rm -rf flutter && git clone https://github.com/flutter/flutter.git -b stable --depth 1 && export PATH=$PATH:`pwd`/flutter/bin && flutter config --enable-web && flutter pub get && flutter build web --release"
+  command = "rm -rf flutter && npm ci && npx prisma generate && npx prisma db push --accept-data-loss && git clone https://github.com/flutter/flutter.git -b stable --depth 1 && export PATH=$PATH:`pwd`/flutter/bin && flutter config --enable-web && flutter pub get && flutter build web --release"
   publish = "build/web"
 
 [build.environment]
   FLUTTER_VERSION = "stable"
+
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
 
 [[redirects]]
   from = "/*"

@@ -35,9 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _hasError = false;
     });
 
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    final ok = AppState().anmelden(
+    final ok = await AppState().anmelden(
       _ktoController.text.trim(),
       _pinController.text.trim(),
     );
