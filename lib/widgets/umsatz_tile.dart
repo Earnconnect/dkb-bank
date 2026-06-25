@@ -10,35 +10,61 @@ class UmsatzTile extends StatelessWidget {
 
   const UmsatzTile({super.key, required this.umsatz});
 
+  static Color _categoryColor(UmsatzKategorie kategorie, bool isGutschrift) {
+    if (isGutschrift) return DkbColors.success;
+    switch (kategorie) {
+      case UmsatzKategorie.gehalt:
+        return DkbColors.success;
+      case UmsatzKategorie.miete:
+        return const Color(0xFF009688);
+      case UmsatzKategorie.lebensmittel:
+        return const Color(0xFFFF6B35);
+      case UmsatzKategorie.transport:
+        return const Color(0xFF3498DB);
+      case UmsatzKategorie.unterhaltung:
+        return const Color(0xFF9B59B6);
+      case UmsatzKategorie.gesundheit:
+        return const Color(0xFFE74C3C);
+      case UmsatzKategorie.versicherung:
+        return const Color(0xFF2980B9);
+      case UmsatzKategorie.abonnement:
+        return const Color(0xFF8E44AD);
+      case UmsatzKategorie.onlineEinkauf:
+        return const Color(0xFFE67E22);
+      case UmsatzKategorie.restaurant:
+        return const Color(0xFFF39C12);
+      case UmsatzKategorie.ueberweisung:
+        return DkbColors.accent;
+      case UmsatzKategorie.gebuehr:
+        return const Color(0xFF7F8C8D);
+      case UmsatzKategorie.sonstiges:
+        return DkbColors.textSecondary;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isGut = umsatz.isGutschrift;
+    final color = _categoryColor(umsatz.kategorie, isGut);
 
     return InkWell(
       onTap: () => showUmsatzDetail(context, umsatz),
-      borderRadius: BorderRadius.circular(DkbRadius.md),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
         child: Row(
           children: [
-            // Category icon
+            // Circular category icon
             Container(
-              width: 42,
-              height: 42,
+              width: 46,
+              height: 46,
               decoration: BoxDecoration(
-                color: isGut
-                    ? DkbColors.success.withValues(alpha: 0.12)
-                    : DkbColors.accent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(DkbRadius.sm),
+                color: color.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
               ),
-              child: Icon(
-                umsatz.kategorieIcon,
-                color: isGut ? DkbColors.success : DkbColors.primary,
-                size: 20,
-              ),
+              child: Icon(umsatz.kategorieIcon, color: color, size: 21),
             ),
 
-            const SizedBox(width: 12),
+            const SizedBox(width: 13),
 
             // Title and subtitle
             Expanded(
@@ -57,7 +83,9 @@ class UmsatzTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    umsatz.verwendungszweck,
+                    umsatz.verwendungszweck.isNotEmpty
+                        ? umsatz.verwendungszweck
+                        : umsatz.kategorieLabel,
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       color: DkbColors.textSecondary,
@@ -66,12 +94,12 @@ class UmsatzTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   if (umsatz.istVormerkung) ...[
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
                         color: DkbColors.warning.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(DkbRadius.xs),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         'Vorgemerkt',
@@ -89,7 +117,7 @@ class UmsatzTile extends StatelessWidget {
 
             const SizedBox(width: 12),
 
-            // Amount and date
+            // Amount and date (right-aligned)
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [

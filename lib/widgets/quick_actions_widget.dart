@@ -25,10 +25,8 @@ class QuickActionsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: actions
-          .map((a) => Expanded(child: _QuickActionButton(action: a)))
-          .toList(),
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: actions.map((a) => _QuickActionButton(action: a)).toList(),
     );
   }
 }
@@ -40,33 +38,42 @@ class _QuickActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final iconColor = action.isAccent ? DkbColors.accent : DkbColors.primary;
+
     return PressScale(
       onTap: action.onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              gradient: action.isAccent ? DkbColors.accentGradient : DkbColors.navyGradient,
-              borderRadius: BorderRadius.circular(DkbRadius.md),
-              boxShadow: DkbShadows.sm,
+      child: SizedBox(
+        width: 72,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: iconColor.withValues(alpha: 0.18),
+                  width: 1.5,
+                ),
+              ),
+              child: Icon(action.icon, color: iconColor, size: 24),
             ),
-            child: Icon(action.icon, color: Colors.white, size: 22),
-          ),
-          const SizedBox(height: 7),
-          Text(
-            action.label,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: DkbColors.textSecondary,
+            const SizedBox(height: 8),
+            Text(
+              action.label,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: DkbColors.textSecondary,
+                height: 1.3,
+              ),
+              maxLines: 2,
             ),
-            maxLines: 2,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

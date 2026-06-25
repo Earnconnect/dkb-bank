@@ -42,14 +42,6 @@ class _MainShellState extends State<MainShell> {
     EinstellungenScreen(),
   ];
 
-  static const _navItems = [
-    _NavItem(Icons.home_outlined, Icons.home, 'Übersicht'),
-    _NavItem(Icons.account_balance_outlined, Icons.account_balance, 'Girokonto'),
-    _NavItem(Icons.credit_card_outlined, Icons.credit_card, 'DKB-Visa'),
-    _NavItem(Icons.send_outlined, Icons.send, 'Überweisung'),
-    _NavItem(Icons.menu_outlined, Icons.menu, 'Mehr'),
-  ];
-
   @override
   Widget build(BuildContext context) {
     if (R.showSidebar(context)) {
@@ -65,26 +57,89 @@ class _MainShellState extends State<MainShell> {
         index: _state.activeTab,
         children: _screens,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: DkbColors.primary.withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _state.activeTab,
-          onTap: _state.setTab,
-          items: _navItems.map((item) {
-            final isActive = _navItems.indexOf(item) == _state.activeTab;
-            return BottomNavigationBarItem(
-              icon: Icon(isActive ? item.activeIcon : item.icon),
-              label: item.label,
-            );
-          }).toList(),
+      bottomNavigationBar: _DkbBottomNav(
+        currentIndex: _state.activeTab,
+        onTap: _state.setTab,
+      ),
+    );
+  }
+}
+
+class _DkbBottomNav extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  const _DkbBottomNav({required this.currentIndex, required this.onTap});
+
+  static const _items = [
+    (Icons.home_outlined, Icons.home, 'Übersicht'),
+    (Icons.account_balance_outlined, Icons.account_balance, 'Girokonto'),
+    (Icons.credit_card_outlined, Icons.credit_card, 'DKB-Visa'),
+    (Icons.send_outlined, Icons.send, 'Überweisung'),
+    (Icons.menu_outlined, Icons.menu, 'Mehr'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFE4E8F0), width: 1)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x0A1C2B56),
+            blurRadius: 12,
+            offset: Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 62,
+          child: Row(
+            children: List.generate(_items.length, (i) {
+              final (icon, activeIcon, label) = _items[i];
+              final isActive = i == currentIndex;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => onTap(i),
+                  behavior: HitTestBehavior.opaque,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Active indicator dot above icon
+                      Container(
+                        width: 20,
+                        height: 3,
+                        margin: const EdgeInsets.only(bottom: 4),
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? DkbColors.primary
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(DkbRadius.full),
+                        ),
+                      ),
+                      Icon(
+                        isActive ? activeIcon : icon,
+                        color: isActive ? DkbColors.primary : DkbColors.textMuted,
+                        size: 22,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        label,
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                          color: isActive ? DkbColors.primary : DkbColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
         ),
       ),
     );
@@ -121,7 +176,6 @@ class _DesktopLayout extends StatelessWidget {
           Expanded(
             child: Column(
               children: [
-                // Top bar
                 Container(
                   height: 64,
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -151,7 +205,8 @@ class _DesktopLayout extends StatelessWidget {
                       ),
                       const Spacer(),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: DkbColors.primary,
                           borderRadius: BorderRadius.circular(DkbRadius.sm),
@@ -189,11 +244,4 @@ class _DesktopLayout extends StatelessWidget {
       ),
     );
   }
-}
-
-class _NavItem {
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-  const _NavItem(this.icon, this.activeIcon, this.label);
 }
