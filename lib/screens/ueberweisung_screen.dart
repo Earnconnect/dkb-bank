@@ -95,7 +95,9 @@ class _UeberweisungScreenState extends State<UeberweisungScreen> {
       iban: rawIban,
       bic: _bicController.text.trim().isEmpty ? 'SSKMDEMMXXX' : _bicController.text.trim(),
       betrag: betrag,
-      verwendungszweck: _verwendungszweckController.text.trim(),
+      verwendungszweck: _verwendungszweckController.text.trim().isEmpty
+          ? 'Überweisung'
+          : _verwendungszweckController.text.trim(),
     );
 
     if (!mounted) return;
@@ -311,6 +313,13 @@ Future<bool> _showConfirmation(double betrag) async {
             IbanTextField(
               controller: _ibanController,
               onBicResolved: (bic) => setState(() => _bicController.text = bic),
+              validator: (val) {
+                if (val == null || val.isEmpty) return 'IBAN eingeben';
+                final clean = val.replaceAll(' ', '').toUpperCase();
+                if (!clean.startsWith('DE')) return 'Bitte eine deutsche IBAN eingeben (DE...)';
+                if (clean.length < 15) return 'IBAN ist zu kurz';
+                return null;
+              },
             ),
 
             const SizedBox(height: 16),
@@ -337,9 +346,17 @@ Future<bool> _showConfirmation(double betrag) async {
 
             const SizedBox(height: 16),
 
-            buildFieldLabel('Verwendungszweck'),
+            buildFieldLabel('Verwendungszweck (optional)'),
             const SizedBox(height: 6),
-            VerwendungszweckTextField(controller: _verwendungszweckController),
+            TextFormField(
+              controller: _verwendungszweckController,
+              maxLength: 140,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                hintText: 'z.B. Rechnung Mai 2026',
+                counterText: '',
+              ),
+            ),
 
             const SizedBox(height: 16),
 

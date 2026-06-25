@@ -69,59 +69,66 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: DkbColors.primary,
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const Spacer(flex: 3),
 
-            // Logo card
-            Container(
-              width: logoW,
-              height: logoH,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(DkbRadius.lg),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.18),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              padding: EdgeInsets.all(logoW * 0.07),
-              child: Image.asset(
-                'assets/images/dkb_logo.png',
-                fit: BoxFit.contain,
-              ),
-            )
-                .animate()
-                .fadeIn(duration: 600.ms)
-                .scale(begin: const Offset(0.75, 0.75), curve: Curves.easeOut),
+            // Logo card — explicitly centered
+            Center(
+              child: Container(
+                width: logoW,
+                height: logoH,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(DkbRadius.lg),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.18),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.all(logoW * 0.07),
+                child: Image.asset(
+                  'assets/images/dkb_logo.png',
+                  fit: BoxFit.contain,
+                ),
+              )
+                  .animate()
+                  .fadeIn(duration: 600.ms)
+                  .scale(begin: const Offset(0.75, 0.75), curve: Curves.easeOut),
+            ),
 
             SizedBox(height: sh * 0.025),
 
-            Text(
-              'Deutsche Kreditbank',
-              style: GoogleFonts.inter(
-                color: Colors.white.withValues(alpha: 0.65),
-                fontSize: (sw * 0.04).clamp(13.0, 17.0),
-                fontWeight: FontWeight.w400,
-                letterSpacing: 0.5,
-              ),
-            )
-                .animate(delay: 300.ms)
-                .fadeIn(duration: 500.ms)
-                .slideY(begin: 0.1, end: 0),
+            Center(
+              child: Text(
+                'Deutsche Kreditbank',
+                style: GoogleFonts.inter(
+                  color: Colors.white.withValues(alpha: 0.65),
+                  fontSize: (sw * 0.04).clamp(13.0, 17.0),
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: 0.5,
+                ),
+              )
+                  .animate(delay: 300.ms)
+                  .fadeIn(duration: 500.ms)
+                  .slideY(begin: 0.1, end: 0),
+            ),
 
             const Spacer(flex: 4),
 
-            SizedBox(
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(DkbColors.accent),
-              ),
-            ).animate(delay: 600.ms).fadeIn(duration: 400.ms),
+            Center(
+              child: SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(DkbColors.accent),
+                ),
+              ).animate(delay: 600.ms).fadeIn(duration: 400.ms),
+            ),
 
             SizedBox(height: sh * 0.06),
           ],

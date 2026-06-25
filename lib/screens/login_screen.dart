@@ -68,85 +68,89 @@ class _LoginScreenState extends State<LoginScreen> {
     final logoW = (sw * 0.48).clamp(130.0, 210.0);
     final logoH = logoW / 2.4;
 
+    // Brand section height: 30% of screen, clamped to a reasonable range
+    final brandH = (sh * 0.30).clamp(160.0, 280.0);
+
     return Scaffold(
       backgroundColor: DkbColors.primary,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Column(
-              children: [
-                // Top brand area — shrinks on short screens
-                Expanded(
-                  flex: isShortScreen ? 3 : 2,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Logo card
-                        Container(
-                          width: logoW,
-                          height: logoH,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(DkbRadius.lg),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.15),
-                                blurRadius: 16,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // ── Top brand area ─────────────────────────────────────────────
+            SizedBox(
+              height: brandH,
+              width: double.infinity,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Logo card
+                  Center(
+                    child: Container(
+                      width: logoW,
+                      height: logoH,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(DkbRadius.lg),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
                           ),
-                          padding: EdgeInsets.all(logoW * 0.07),
-                          child: Image.asset(
-                            'assets/images/dkb_logo.png',
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                        SizedBox(height: isShortScreen ? 8 : 12),
-                        Text(
-                          'Willkommen zurück',
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontSize: isShortScreen ? 18 : 22,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Melden Sie sich mit Ihrer Kontonummer an',
-                          style: GoogleFonts.inter(
-                            color: Colors.white.withValues(alpha: 0.6),
-                            fontSize: 13,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                        ],
+                      ),
+                      padding: EdgeInsets.all(logoW * 0.07),
+                      child: Image.asset(
+                        'assets/images/dkb_logo.png',
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
-                ).animate().fadeIn(duration: 500.ms),
+                  SizedBox(height: isShortScreen ? 8 : 14),
+                  Text(
+                    'Willkommen zurück',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: isShortScreen ? 18 : 22,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Melden Sie sich mit Ihrer Kontonummer an',
+                    style: GoogleFonts.inter(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontSize: 13,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ).animate().fadeIn(duration: 500.ms),
+            ),
 
-                // White form card — scrollable for small screens
-                Expanded(
-                  flex: isShortScreen ? 5 : 3,
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 500),
-                      child: Container(
-                        width: double.infinity,
-                        decoration: const BoxDecoration(
-                          color: DkbColors.background,
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                        ),
-                        child: SingleChildScrollView(
-                          padding: EdgeInsets.fromLTRB(
-                            24,
-                            isShortScreen ? 12 : 20,
-                            24,
-                            24,
-                          ),
+            // ── White form card ────────────────────────────────────────────
+            Expanded(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 500),
+                  child: Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: DkbColors.background,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                    ),
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(
+                        24,
+                        isShortScreen ? 12 : 20,
+                        24,
+                        24,
+                      ),
                           child: Form(
                             key: _formKey,
                             child: Column(
@@ -299,10 +303,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ).animate(delay: 200.ms).fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
                 ),
               ],
-            );
-          },
-        ),
-      ),
+            ),
+          ),
     );
   }
 
