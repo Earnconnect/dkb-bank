@@ -6,6 +6,7 @@ import '../data/mock_data.dart';
 import '../models/beneficiary.dart';
 import '../utils/german_formatter.dart';
 import '../widgets/sepa_form_fields.dart';
+import '../widgets/transfer_blocked_sheet.dart';
 import '../widgets/dkb_connect_sheet.dart';
 
 class UeberweisungScreen extends StatefulWidget {
@@ -41,10 +42,30 @@ class _UeberweisungScreenState extends State<UeberweisungScreen> {
     final rawIban = _ibanController.text.replaceAll(' ', '');
     final state = AppState();
 
-    // ── Gate: must be a saved beneficiary (any valid DE IBAN) ────────────
+    // ── Gate: must be a saved beneficiary ────────────────────────────────
     if (!state.isBeneficiary(rawIban)) {
       if (!mounted) return;
-      _showAddBeneficiaryRequired(rawIban);
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.black.withValues(alpha: 0.6),
+        builder: (_) => TransferBlockedSheet(
+          recipientName: _empfaengerController.text.trim(),
+          iban: GermanFormatter.ibanFormatiert(_ibanController.text),
+          onAddBeneficiary: () => showDkbConnectSheet(
+            context,
+            prefillIban: rawIban,
+            onSuccess: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                      'Begünstigter verknüpft. Sie können jetzt überweisen.'),
+                ),
+              );
+            },
+          ),
+        ),
+      );
       return;
     }
 
@@ -82,81 +103,7 @@ class _UeberweisungScreenState extends State<UeberweisungScreen> {
     _showSuccess(ref, betrag);
   }
 
-  void _showAddBeneficiaryRequired(String iban) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.person_add_outlined,
-                color: DkbColors.primary, size: 22),
-            const SizedBox(width: 10),
-            Text(
-              'Begünstigter fehlt',
-              style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w700, fontSize: 16),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Dieser Empfänger muss zuerst als Begünstigter verknüpft werden, '
-              'bevor Sie eine Überweisung ausführen können.',
-              style: GoogleFonts.inter(fontSize: 13, height: 1.4),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: DkbColors.primary.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                GermanFormatter.ibanFormatiert(iban),
-                style: GoogleFonts.ibmPlexMono(
-                  fontSize: 12,
-                  color: DkbColors.primary,
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Abbrechen',
-                style:
-                    GoogleFonts.inter(color: DkbColors.textSecondary)),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
-              showDkbConnectSheet(
-                context,
-                prefillIban: iban,
-                onSuccess: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                          'Begünstigter verknüpft. Sie können jetzt überweisen.'),
-                    ),
-                  );
-                },
-              );
-            },
-            icon: const Icon(Icons.link, size: 16),
-            label: const Text('Jetzt verknüpfen'),
-            style: ElevatedButton.styleFrom(minimumSize: const Size(130, 40)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<bool> _showConfirmation(double betrag) async {
+Future<bool> _showConfirmation(double betrag) async {
     return await showDialog<bool>(
           context: context,
           builder: (_) => AlertDialog(

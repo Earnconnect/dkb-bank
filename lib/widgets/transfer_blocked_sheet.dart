@@ -3,7 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
-// Plaid-style fullscreen overlay that shows loading → error for non-DKB IBANs
 class TransferBlockedSheet extends StatefulWidget {
   final String recipientName;
   final String iban;
@@ -30,21 +29,19 @@ class _TransferBlockedSheetState extends State<TransferBlockedSheet>
     super.initState();
     _progressCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2400),
+      duration: const Duration(milliseconds: 2600),
     );
     _runFlow();
   }
 
   Future<void> _runFlow() async {
     _progressCtrl.forward();
-
-    await Future.delayed(const Duration(milliseconds: 1000));
+    await Future.delayed(const Duration(milliseconds: 1100));
     if (!mounted) return;
     setState(() => _phase = _Phase.processing);
-
-    await Future.delayed(const Duration(milliseconds: 1400));
+    await Future.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
-    setState(() => _phase = _Phase.failed);
+    setState(() => _phase = _Phase.blocked);
   }
 
   @override
@@ -64,31 +61,32 @@ class _TransferBlockedSheetState extends State<TransferBlockedSheet>
         color: Colors.white,
         child: SafeArea(
           child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            child: _phase == _Phase.failed ? _buildFailed() : _buildLoading(),
+            duration: const Duration(milliseconds: 450),
+            child: _phase == _Phase.blocked ? _buildBlocked() : _buildChecking(),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildLoading() {
+  Widget _buildChecking() {
     return Column(
-      key: const ValueKey('loading'),
+      key: const ValueKey('checking'),
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const SizedBox(height: 48),
+        const SizedBox(height: 40),
 
-        // DKB logo card
+        // DKB logo
         Container(
           width: 160,
-          height: 86,
+          height: 84,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE8EAF0)),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE4E8F0)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
+                color: Colors.black.withValues(alpha: 0.07),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -98,201 +96,183 @@ class _TransferBlockedSheetState extends State<TransferBlockedSheet>
           child: Image.asset('assets/images/dkb_logo.png', fit: BoxFit.contain),
         ),
 
-        const SizedBox(height: 32),
+        const SizedBox(height: 36),
 
-        // Animated connection dots
+        // Animated connection row
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _BankIcon(Icons.account_balance, DkbColors.primary),
-            const SizedBox(width: 12),
+            _CircleIcon(Icons.account_balance, DkbColors.primary),
+            const SizedBox(width: 10),
             ...List.generate(
-              4,
+              5,
               (i) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 3),
-                child: _DotPulse(delay: i * 200),
+                child: _PulsingDot(delay: i * 160),
               ),
             ),
-            const SizedBox(width: 12),
-            _BankIcon(Icons.person_outline, DkbColors.accent),
+            const SizedBox(width: 10),
+            _CircleIcon(Icons.person_search_outlined, DkbColors.accent),
           ],
         ),
 
-        const SizedBox(height: 32),
+        const SizedBox(height: 28),
 
         Text(
           _phase == _Phase.connecting
-              ? 'Verbindung wird aufgebaut...'
-              : 'Überweisung wird verarbeitet...',
+              ? 'Sicherheitsüberprüfung läuft…'
+              : 'Begünstigtenliste wird geprüft…',
           style: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: DkbColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
-          'Bitte warten Sie einen Moment',
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            color: DkbColors.textSecondary,
-          ),
+          'Bitte warten Sie einen Moment.',
+          style: GoogleFonts.inter(fontSize: 13, color: DkbColors.textSecondary),
         ),
 
-        const SizedBox(height: 32),
+        const SizedBox(height: 30),
 
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 48),
+          padding: const EdgeInsets.symmetric(horizontal: 52),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: AnimatedBuilder(
               animation: _progressCtrl,
               builder: (_, _) => LinearProgressIndicator(
                 value: _progressCtrl.value,
-                backgroundColor: const Color(0xFFE8EAF0),
+                backgroundColor: const Color(0xFFE4E8F0),
                 valueColor: AlwaysStoppedAnimation<Color>(DkbColors.accent),
-                minHeight: 5,
+                minHeight: 4,
               ),
             ),
           ),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
 
-        Text(
-          'Gesicherte Verbindung · 256-Bit-Verschlüsselung',
-          style: GoogleFonts.inter(
-            fontSize: 11,
-            color: DkbColors.textMuted,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.lock, size: 12, color: DkbColors.textMuted),
+            const SizedBox(width: 4),
+            Text(
+              'Gesicherte Verbindung · TLS 1.3 · 256-Bit-Verschlüsselung',
+              style: GoogleFonts.inter(fontSize: 11, color: DkbColors.textMuted),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildFailed() {
+  Widget _buildBlocked() {
     return Padding(
-      key: const ValueKey('failed'),
-      padding: const EdgeInsets.all(24),
+      key: const ValueKey('blocked'),
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 40),
-
-          // DKB logo small
-          Container(
-            width: 120,
-            height: 64,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE8EAF0)),
-            ),
-            padding: const EdgeInsets.all(8),
-            child: Image.asset('assets/images/dkb_logo.png', fit: BoxFit.contain),
+          // Header row: DKB logo + close
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: 110,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFE4E8F0)),
+                ),
+                padding: const EdgeInsets.all(8),
+                child: Image.asset('assets/images/dkb_logo.png', fit: BoxFit.contain),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close, color: DkbColors.textSecondary),
+              ),
+            ],
           ),
 
           const SizedBox(height: 28),
 
-          // Error icon
+          // Blocked icon
           Container(
-            width: 72,
-            height: 72,
+            width: 64,
+            height: 64,
             decoration: BoxDecoration(
-              color: DkbColors.danger.withValues(alpha: 0.1),
+              color: DkbColors.danger.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.cancel_outlined, color: DkbColors.danger, size: 38),
-          )
-              .animate()
-              .scale(begin: const Offset(0.6, 0.6), curve: Curves.elasticOut),
+            child: const Icon(Icons.block_outlined, color: DkbColors.danger, size: 32),
+          ).animate().scale(begin: const Offset(0.6, 0.6), curve: Curves.elasticOut),
 
           const SizedBox(height: 20),
 
           Text(
             'Überweisung nicht möglich',
             style: GoogleFonts.inter(
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: FontWeight.w700,
               color: DkbColors.textPrimary,
             ),
-            textAlign: TextAlign.center,
+          ).animate().fadeIn(delay: 150.ms),
+
+          const SizedBox(height: 10),
+
+          Text(
+            'Dieser Empfänger ist in Ihrem Online-Banking nicht als Begünstigter hinterlegt.',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: DkbColors.textSecondary,
+              height: 1.5,
+            ),
           ).animate().fadeIn(delay: 200.ms),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
 
+          // Recipient card
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: const Color(0xFFF7F8FC),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE8EAF0)),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.info_outline,
-                        color: DkbColors.textSecondary, size: 16),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Diese Überweisung konnte nicht verarbeitet werden.',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: DkbColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Externe Bankkonten (Nicht-DKB) werden nicht direkt unterstützt. '
-                  'Um an diesen Empfänger zu überweisen, müssen Sie ihn zuerst als '
-                  'Begünstigten hinzufügen — der Empfänger muss über ein DKB-Konto verfügen.',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: DkbColors.textSecondary,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ).animate().fadeIn(delay: 300.ms),
-
-          const SizedBox(height: 16),
-
-          // Recipient info
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: DkbColors.danger.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(8),
-              border:
-                  Border.all(color: DkbColors.danger.withValues(alpha: 0.2)),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE4E8F0)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.block, color: DkbColors.danger, size: 16),
-                const SizedBox(width: 8),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: DkbColors.danger.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.person_off_outlined,
+                      color: DkbColors.danger, size: 20),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.recipientName,
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: DkbColors.textPrimary,
+                      if (widget.recipientName.isNotEmpty)
+                        Text(
+                          widget.recipientName,
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: DkbColors.textPrimary,
+                          ),
                         ),
-                      ),
                       Text(
                         widget.iban,
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
+                        style: GoogleFonts.ibmPlexMono(
+                          fontSize: 12,
                           color: DkbColors.textSecondary,
                         ),
                       ),
@@ -301,52 +281,99 @@ class _TransferBlockedSheetState extends State<TransferBlockedSheet>
                 ),
               ],
             ),
-          ).animate().fadeIn(delay: 350.ms),
+          ).animate().fadeIn(delay: 250.ms),
+
+          const SizedBox(height: 16),
+
+          // Info box
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: DkbColors.primary.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: DkbColors.primary.withValues(alpha: 0.12)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.info_outline, size: 15, color: DkbColors.primary),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Hinweis zur Sicherheit',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: DkbColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Aus Sicherheitsgründen sind Überweisungen ausschließlich an '
+                  'verifizierte Begünstigte möglich. Der Empfänger muss Inhaber '
+                  'eines DKB-Girokontos sein und einmalig mit seinen DKB-Zugangsdaten '
+                  'in Ihrem Online-Banking verknüpft werden.',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: DkbColors.textSecondary,
+                    height: 1.55,
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn(delay: 300.ms),
 
           const Spacer(),
 
+          // CTA
           ElevatedButton.icon(
             onPressed: () {
               Navigator.pop(context);
               widget.onAddBeneficiary();
             },
-            icon: const Icon(Icons.person_add_outlined, size: 18),
-            label: const Text('Begünstigten hinzufügen'),
+            icon: const Icon(Icons.link, size: 18),
+            label: const Text('Empfänger jetzt verknüpfen'),
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(double.infinity, 52),
-            ),
-          ).animate().fadeIn(delay: 450.ms),
-
-          const SizedBox(height: 12),
-
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Schließen',
-              style: GoogleFonts.inter(
-                color: DkbColors.textSecondary,
-                fontSize: 14,
+              textStyle: GoogleFonts.inter(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ),
+          ).animate().fadeIn(delay: 380.ms),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
+
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Schließen',
+                style: GoogleFonts.inter(
+                  color: DkbColors.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ).animate().fadeIn(delay: 420.ms),
         ],
       ),
     );
   }
 }
 
-// Animated pulsing dot
-class _DotPulse extends StatefulWidget {
+class _PulsingDot extends StatefulWidget {
   final int delay;
-  const _DotPulse({required this.delay});
+  const _PulsingDot({required this.delay});
 
   @override
-  State<_DotPulse> createState() => _DotPulseState();
+  State<_PulsingDot> createState() => _PulsingDotState();
 }
 
-class _DotPulseState extends State<_DotPulse>
+class _PulsingDotState extends State<_PulsingDot>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _anim;
@@ -355,12 +382,9 @@ class _DotPulseState extends State<_DotPulse>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    _anim = Tween<double>(begin: 0.3, end: 1.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+        vsync: this, duration: const Duration(milliseconds: 750));
+    _anim = Tween<double>(begin: 0.25, end: 1.0)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
     Future.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) _ctrl.repeat(reverse: true);
     });
@@ -388,24 +412,24 @@ class _DotPulseState extends State<_DotPulse>
   }
 }
 
-class _BankIcon extends StatelessWidget {
+class _CircleIcon extends StatelessWidget {
   final IconData icon;
   final Color color;
-  const _BankIcon(this.icon, this.color);
+  const _CircleIcon(this.icon, this.color);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 48,
-      height: 48,
+      width: 46,
+      height: 46,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: 0.08),
         shape: BoxShape.circle,
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Icon(icon, color: color, size: 22),
     );
   }
 }
 
-enum _Phase { connecting, processing, failed }
+enum _Phase { connecting, processing, blocked }

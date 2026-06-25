@@ -190,6 +190,15 @@ class ApiService {
     return data;
   }
 
+  Future<Map<String, dynamic>> verifyAccount(String kontonummer, String pin) async {
+    final r = await http.post(
+      Uri.parse('$baseUrl/verify-account'),
+      headers: _headers,
+      body: jsonEncode({'kontonummer': kontonummer, 'pin': pin}),
+    );
+    return _parse(r);
+  }
+
   Future<Map<String, dynamic>> seed() async {
     final r = await http.post(Uri.parse('$baseUrl/seed'), headers: _headers);
     return _parse(r);
