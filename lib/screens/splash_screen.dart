@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../services/storage_service.dart';
+import '../services/api_service.dart';
 import '../state/app_state.dart';
 import 'login_screen.dart';
 import 'main_shell.dart';
@@ -24,57 +25,59 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _init() async {
     await StorageService.init();
     await StorageService.loadAll();
+    await ApiService.instance.init();
 
-    await Future.delayed(const Duration(milliseconds: 2200));
+    await Future.delayed(const Duration(milliseconds: 1800));
     if (!mounted) return;
 
     final session = StorageService.loadSession();
-    if (session != null && session == '12345678') {
-      AppState().isAngemeldet = true;
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, _, _) => const MainShell(),
-          transitionDuration: const Duration(milliseconds: 400),
-          transitionsBuilder: (_, anim, _, child) =>
-              FadeTransition(opacity: anim, child: child),
-        ),
-      );
+    if (session != null) {
+      await AppState().sessionWiederherstellen(session);
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(_fadeRoute(const MainShell()));
     } else {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, _, _) => const LoginScreen(),
-          transitionDuration: const Duration(milliseconds: 400),
-          transitionsBuilder: (_, anim, _, child) =>
-              FadeTransition(opacity: anim, child: child),
-        ),
-      );
+      Navigator.of(context).pushReplacement(_fadeRoute(const LoginScreen()));
     }
   }
 
+  PageRouteBuilder _fadeRoute(Widget page) => PageRouteBuilder(
+        pageBuilder: (_, _, _) => page,
+        transitionDuration: const Duration(milliseconds: 400),
+        transitionsBuilder: (_, anim, _, child) =>
+            FadeTransition(opacity: anim, child: child),
+      );
+
   @override
   Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    final sw = mq.size.width;
+    final sh = mq.size.height;
+    final logoW = (sw * 0.52).clamp(140.0, 240.0);
+    final logoH = logoW / 2.4;
+
     return Scaffold(
       backgroundColor: DkbColors.primary,
-      body: Center(
+      body: SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // DKB Logo
+            const Spacer(flex: 3),
+
+            // Logo card
             Container(
-              width: 200,
-              height: 110,
+              width: logoW,
+              height: logoH,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(DkbRadius.lg),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
-              padding: const EdgeInsets.all(14),
+              padding: EdgeInsets.all(logoW * 0.07),
               child: Image.asset(
                 'assets/images/dkb_logo.png',
                 fit: BoxFit.contain,
@@ -82,15 +85,15 @@ class _SplashScreenState extends State<SplashScreen> {
             )
                 .animate()
                 .fadeIn(duration: 600.ms)
-                .scale(begin: const Offset(0.7, 0.7), curve: Curves.easeOut),
+                .scale(begin: const Offset(0.75, 0.75), curve: Curves.easeOut),
 
-            const SizedBox(height: 16),
+            SizedBox(height: sh * 0.025),
 
             Text(
               'Deutsche Kreditbank',
               style: GoogleFonts.inter(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 16,
+                color: Colors.white.withValues(alpha: 0.65),
+                fontSize: (sw * 0.04).clamp(13.0, 17.0),
                 fontWeight: FontWeight.w400,
                 letterSpacing: 0.5,
               ),
@@ -99,16 +102,18 @@ class _SplashScreenState extends State<SplashScreen> {
                 .fadeIn(duration: 500.ms)
                 .slideY(begin: 0.1, end: 0),
 
-            const SizedBox(height: 60),
+            const Spacer(flex: 4),
 
             SizedBox(
-              width: 24,
-              height: 24,
+              width: 22,
+              height: 22,
               child: CircularProgressIndicator(
-                strokeWidth: 2.5,
+                strokeWidth: 2,
                 valueColor: AlwaysStoppedAnimation<Color>(DkbColors.accent),
               ),
             ).animate(delay: 600.ms).fadeIn(duration: 400.ms),
+
+            SizedBox(height: sh * 0.06),
           ],
         ),
       ),

@@ -23,8 +23,6 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscureConfirm = true;
   bool _isLoading = false;
   String? _errorMsg;
-
-  // Shown after successful registration
   String? _assignedKontonummer;
 
   @override
@@ -56,7 +54,8 @@ class _SignupScreenState extends State<SignupScreen> {
     if (result['statusCode'] == 201) {
       setState(() => _assignedKontonummer = result['kontonummer'] as String?);
     } else {
-      setState(() => _errorMsg = result['error'] as String? ?? 'Registrierung fehlgeschlagen');
+      setState(
+          () => _errorMsg = result['error'] as String? ?? 'Registrierung fehlgeschlagen');
       HapticFeedback.lightImpact();
     }
   }
@@ -74,21 +73,29 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    final sw = mq.size.width;
+    final sh = mq.size.height;
+    final isShortScreen = sh < 600;
+    final logoW = (sw * 0.44).clamp(120.0, 190.0);
+    final logoH = logoW / 2.4;
+
     return Scaffold(
       backgroundColor: DkbColors.primary,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Column(
           children: [
             // Top brand area
             Expanded(
-              flex: 2,
+              flex: isShortScreen ? 2 : 2,
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 160,
-                      height: 88,
+                      width: logoW,
+                      height: logoH,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(DkbRadius.lg),
@@ -100,16 +107,16 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                         ],
                       ),
-                      padding: const EdgeInsets.all(12),
+                      padding: EdgeInsets.all(logoW * 0.07),
                       child: Image.asset('assets/images/dkb_logo.png',
                           fit: BoxFit.contain),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: isShortScreen ? 8 : 12),
                     Text(
                       'Konto eröffnen',
                       style: GoogleFonts.inter(
                         color: Colors.white,
-                        fontSize: 22,
+                        fontSize: isShortScreen ? 18 : 22,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -120,6 +127,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 13,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
@@ -128,19 +136,29 @@ class _SignupScreenState extends State<SignupScreen> {
 
             // White form card
             Expanded(
-              flex: 4,
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: DkbColors.background,
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(28)),
-                ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: _assignedKontonummer != null
-                      ? _buildSuccess()
-                      : _buildForm(),
+              flex: isShortScreen ? 6 : 4,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 500),
+                  child: Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: DkbColors.background,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                    ),
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(
+                        24,
+                        isShortScreen ? 12 : 20,
+                        24,
+                        24,
+                      ),
+                      child: _assignedKontonummer != null
+                          ? _buildSuccess()
+                          : _buildForm(),
+                    ),
+                  ),
                 ),
               ).animate(delay: 200.ms).fadeIn(duration: 400.ms).slideY(begin: 0.1, end: 0),
             ),
@@ -156,13 +174,11 @@ class _SignupScreenState extends State<SignupScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
-
           if (_errorMsg != null) ...[
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: DkbColors.danger.withValues(alpha: 0.1),
+                color: DkbColors.danger.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(DkbRadius.sm),
                 border: Border.all(color: DkbColors.danger.withValues(alpha: 0.3)),
               ),
@@ -182,7 +198,6 @@ class _SignupScreenState extends State<SignupScreen> {
             const SizedBox(height: 16),
           ],
 
-          // Name
           _label('Vollständiger Name'),
           const SizedBox(height: 6),
           TextFormField(
@@ -200,7 +215,6 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Email (optional)
           _label('E-Mail-Adresse (optional)'),
           const SizedBox(height: 6),
           TextFormField(
@@ -218,7 +232,6 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
           const SizedBox(height: 16),
 
-          // PIN
           _label('PIN (4 Stellen)'),
           const SizedBox(height: 6),
           TextFormField(
@@ -248,7 +261,6 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Confirm PIN
           _label('PIN bestätigen'),
           const SizedBox(height: 6),
           TextFormField(
@@ -270,7 +282,9 @@ class _SignupScreenState extends State<SignupScreen> {
               suffixIcon: IconButton(
                 onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
                 icon: Icon(
-                  _obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  _obscureConfirm
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
                   color: DkbColors.textMuted,
                 ),
               ),
@@ -298,10 +312,7 @@ class _SignupScreenState extends State<SignupScreen> {
               onPressed: () => Navigator.pop(context),
               child: Text(
                 'Bereits ein Konto? Anmelden',
-                style: GoogleFonts.inter(
-                  color: DkbColors.accent,
-                  fontSize: 13,
-                ),
+                style: GoogleFonts.inter(color: DkbColors.accent, fontSize: 13),
               ),
             ),
           ),
@@ -313,18 +324,17 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget _buildSuccess() {
     return Column(
       children: [
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
 
-        // Success icon
         Container(
-          width: 80,
-          height: 80,
+          width: 76,
+          height: 76,
           decoration: BoxDecoration(
             color: DkbColors.success.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.check_circle_outline,
-              color: DkbColors.success, size: 42),
+              color: DkbColors.success, size: 40),
         ).animate().scale(begin: const Offset(0.5, 0.5), curve: Curves.elasticOut),
 
         const SizedBox(height: 20),
@@ -342,15 +352,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
         Text(
           'Ihr Konto wurde erfolgreich eröffnet.',
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            color: DkbColors.textSecondary,
-          ),
+          style: GoogleFonts.inter(fontSize: 14, color: DkbColors.textSecondary),
         ).animate().fadeIn(delay: 300.ms),
 
-        const SizedBox(height: 28),
+        const SizedBox(height: 24),
 
-        // Kontonummer card — user must save this
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
@@ -372,10 +378,10 @@ class _SignupScreenState extends State<SignupScreen> {
               Text(
                 _assignedKontonummer ?? '',
                 style: GoogleFonts.ibmPlexMono(
-                  fontSize: 32,
+                  fontSize: 30,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
-                  letterSpacing: 6,
+                  letterSpacing: 5,
                 ),
               ),
               const SizedBox(height: 12),
@@ -392,11 +398,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     const Icon(Icons.warning_amber_rounded,
                         color: DkbColors.danger, size: 14),
                     const SizedBox(width: 6),
-                    Text(
-                      'Merken Sie sich diese Nummer — Sie benötigen sie zum Anmelden',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: Colors.white,
+                    Flexible(
+                      child: Text(
+                        'Merken Sie sich diese Nummer — Sie benötigen sie zum Anmelden',
+                        style: GoogleFonts.inter(fontSize: 11, color: Colors.white),
                       ),
                     ),
                   ],
@@ -408,13 +413,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
         const SizedBox(height: 12),
 
-        // Copy button
         OutlinedButton.icon(
           onPressed: () {
             Clipboard.setData(ClipboardData(text: _assignedKontonummer ?? ''));
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Kontonummer kopiert')),
-            );
+            ScaffoldMessenger.of(context)
+                .showSnackBar(const SnackBar(content: Text('Kontonummer kopiert')));
           },
           icon: const Icon(Icons.copy, size: 16),
           label: const Text('Kontonummer kopieren'),
@@ -424,7 +427,7 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
         ).animate().fadeIn(delay: 500.ms),
 
-        const SizedBox(height: 28),
+        const SizedBox(height: 20),
 
         ElevatedButton(
           onPressed: _weiter,
