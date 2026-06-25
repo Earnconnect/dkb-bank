@@ -32,12 +32,22 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final session = StorageService.loadSession();
     if (session != null) {
-      await AppState().sessionWiederherstellen(session);
+      // Restore session with a hard timeout — never block the splash screen
+      try {
+        await AppState()
+            .sessionWiederherstellen(session)
+            .timeout(const Duration(seconds: 8));
+      } catch (_) {
+        // Timeout or error — fall through to login
+      }
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(_fadeRoute(const MainShell()));
-    } else {
-      Navigator.of(context).pushReplacement(_fadeRoute(const LoginScreen()));
+      if (AppState().isAngemeldet) {
+        Navigator.of(context).pushReplacement(_fadeRoute(const MainShell()));
+        return;
+      }
     }
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(_fadeRoute(const LoginScreen()));
   }
 
   PageRouteBuilder _fadeRoute(Widget page) => PageRouteBuilder(

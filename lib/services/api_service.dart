@@ -60,7 +60,9 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> me() async {
-    final r = await http.get(Uri.parse('$baseUrl/me'), headers: _headers);
+    final r = await http
+        .get(Uri.parse('$baseUrl/me'), headers: _headers)
+        .timeout(const Duration(seconds: 6));
     return _parse(r);
   }
 
