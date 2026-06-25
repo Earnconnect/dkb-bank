@@ -278,7 +278,22 @@ class AppState extends ChangeNotifier {
       if (result['statusCode'] == 201 && result['dauerauftrag'] != null) {
         final dbId = result['dauerauftrag']['id'] as String;
         final idx = MockData.dauerauftraege.indexWhere((x) => x.id == d.id);
-        if (idx >= 0) MockData.dauerauftraege[idx].id = dbId;
+        if (idx >= 0) {
+          final existing = MockData.dauerauftraege[idx];
+          MockData.dauerauftraege[idx] = Dauerauftrag(
+            id: dbId,
+            vonKontoId: existing.vonKontoId,
+            empfaengerName: existing.empfaengerName,
+            iban: existing.iban,
+            bic: existing.bic,
+            betrag: existing.betrag,
+            verwendungszweck: existing.verwendungszweck,
+            turnus: existing.turnus,
+            naechsteAusfuehrung: existing.naechsteAusfuehrung,
+            endDatum: existing.endDatum,
+            isAktiv: existing.isAktiv,
+          );
+        }
       }
     }).catchError((_) {});
   }
@@ -403,7 +418,7 @@ class AppState extends ChangeNotifier {
       typ: (j['typ'] as String) == 'gutschrift'
           ? UmsatzTyp.gutschrift
           : UmsatzTyp.belastung,
-      kategorie: _parseKategorie(j['kategorie'] as String?),
+      kategorie: _parseKategorie(j['kategorie'] as String?) ?? UmsatzKategorie.sonstiges,
       referenznummer: j['referenznummer'] as String?,
     );
   }
