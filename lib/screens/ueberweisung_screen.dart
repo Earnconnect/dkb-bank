@@ -6,7 +6,6 @@ import '../data/mock_data.dart';
 import '../models/beneficiary.dart';
 import '../utils/german_formatter.dart';
 import '../widgets/sepa_form_fields.dart';
-import '../widgets/transfer_blocked_sheet.dart';
 import '../widgets/dkb_connect_sheet.dart';
 
 class UeberweisungScreen extends StatefulWidget {
@@ -42,40 +41,14 @@ class _UeberweisungScreenState extends State<UeberweisungScreen> {
     final rawIban = _ibanController.text.replaceAll(' ', '');
     final state = AppState();
 
-    // ── Gate 1: must be a DKB IBAN ──────────────────────────────────────
-    if (!state.isDkbIban(rawIban)) {
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        barrierColor: Colors.black.withValues(alpha: 0.7),
-        builder: (_) => TransferBlockedSheet(
-          recipientName: _empfaengerController.text.trim(),
-          iban: GermanFormatter.ibanFormatiert(_ibanController.text),
-          onAddBeneficiary: () => showDkbConnectSheet(
-            context,
-            onSuccess: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content:
-                      Text('Begünstigter hinzugefügt. Sie können jetzt überweisen.'),
-                ),
-              );
-            },
-          ),
-        ),
-      );
-      return;
-    }
-
-    // ── Gate 2: DKB IBAN but not yet a beneficiary ───────────────────────
+    // ── Gate: must be a saved beneficiary (any valid DE IBAN) ────────────
     if (!state.isBeneficiary(rawIban)) {
       if (!mounted) return;
       _showAddBeneficiaryRequired(rawIban);
       return;
     }
 
-    // ── Proceed: DKB IBAN + beneficiary confirmed ─────────────────────────
+    // ── Proceed: beneficiary confirmed ────────────────────────────────────
     final betrag = GermanFormatter.parseGermanBetrag(_betragController.text);
     if (betrag > MockData.girokonto.verfuegbar) {
       ScaffoldMessenger.of(context).showSnackBar(
