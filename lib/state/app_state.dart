@@ -49,6 +49,28 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  Future<Map<String, dynamic>> registrieren({
+    required String name,
+    String? email,
+    required String pin,
+    required String confirmPin,
+  }) async {
+    final result = await ApiService.instance.register(
+      name: name,
+      email: email,
+      pin: pin,
+      confirmPin: confirmPin,
+    );
+    if (result['statusCode'] == 201) {
+      _hydrateUser(result);
+      await _loadAllData();
+      isAngemeldet = true;
+      StorageService.saveSession(result['kontonummer'] as String);
+      notifyListeners();
+    }
+    return result;
+  }
+
   Future<bool> sessionWiederherstellen(String kontonummer) async {
     try {
       final result = await ApiService.instance.me();

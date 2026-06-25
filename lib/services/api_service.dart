@@ -169,6 +169,27 @@ class ApiService {
     return _parse(r);
   }
 
+  Future<Map<String, dynamic>> register({
+    required String name,
+    String? email,
+    required String pin,
+    required String confirmPin,
+  }) async {
+    final r = await http.post(
+      Uri.parse('$baseUrl/register'),
+      headers: _headers,
+      body: jsonEncode({
+        'name': name,
+        'email': email,
+        'pin': pin,
+        'confirmPin': confirmPin,
+      }),
+    );
+    final data = await _parse(r);
+    if (r.statusCode == 201) await _saveToken(data['token'] as String);
+    return data;
+  }
+
   Future<Map<String, dynamic>> seed() async {
     final r = await http.post(Uri.parse('$baseUrl/seed'), headers: _headers);
     return _parse(r);

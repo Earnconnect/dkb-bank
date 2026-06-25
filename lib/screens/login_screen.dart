@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../state/app_state.dart';
 import 'main_shell.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -259,6 +260,25 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 )
                               : const Text('Anmelden'),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        Center(
+                          child: TextButton(
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const SignupScreen()),
+                            ),
+                            child: Text(
+                              'Noch kein Konto? Jetzt eröffnen',
+                              style: GoogleFonts.inter(
+                                color: DkbColors.accent,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                         ),
 
                       ],
