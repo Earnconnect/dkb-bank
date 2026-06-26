@@ -8,6 +8,7 @@ class ApiService {
   static final ApiService instance = ApiService._();
 
   String? _token;
+  String? _adminToken;
 
   static String get baseUrl {
     if (kIsWeb) {
@@ -37,16 +38,26 @@ class ApiService {
   }
 
   bool get hasToken => _token != null;
+  bool get hasAdminToken => _adminToken != null;
+
+  void adminLogout() => _adminToken = null;
 
   Map<String, String> get _headers => {
     'Content-Type': 'application/json',
     if (_token != null) 'Authorization': 'Bearer $_token',
   };
 
+  Map<String, String> get _adminHeaders => {
+    'Content-Type': 'application/json',
+    if (_adminToken != null) 'Authorization': 'Bearer $_adminToken',
+  };
+
   Future<Map<String, dynamic>> _parse(http.Response r) async {
     final data = jsonDecode(r.body) as Map<String, dynamic>;
     return {'statusCode': r.statusCode, ...data};
   }
+
+  // ── Regular user endpoints ─────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> login(String kontonummer, String pin) async {
     final r = await http.post(
@@ -203,6 +214,68 @@ class ApiService {
 
   Future<Map<String, dynamic>> seed() async {
     final r = await http.post(Uri.parse('$baseUrl/seed'), headers: _headers);
+    return _parse(r);
+  }
+
+  // ── Admin endpoints ────────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> adminLogin(String password) async {
+    final r = await http.post(
+      Uri.parse('$baseUrl/admin-auth'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'password': password}),
+    );
+    final data = await _parse(r);
+    if (r.statusCode == 200) _adminToken = data['token'] as String;
+    return data;
+  }
+
+  Future<Map<String, dynamic>> adminGetUsers() async {
+    final r = await http.get(Uri.parse('$baseUrl/admin-users'), headers: _adminHeaders);
+    return _parse(r);
+  }
+
+  Future<Map<String, dynamic>> adminGetTransactions({String? userId}) async {
+    final url = userId != null
+        ? '$baseUrl/admin-transactions?userId=$userId'
+        : '$baseUrl/admin-transactions';
+    final r = await http.get(Uri.parse(url), headers: _adminHeaders);
+    return _parse(r);
+  }
+
+  Future<Map<String, dynamic>> adminFund({
+    required String userId,
+    required double amount,
+    required String operation,
+    required String kontoType,
+  }) async {
+    final r = await http.post(
+      Uri.parse('$baseUrl/admin-fund'),
+      headers: _adminHeaders,
+      body: jsonEncode({'userId': userId, 'amount': amount, 'operation': operation, 'kontoType': kontoType}),
+    );
+    return _parse(r);
+  }
+
+  Future<Map<String, dynamic>> adminAccountAction({
+    required String userId,
+    required String action,
+    String? newPin,
+  }) async {
+    final r = await http.post(
+      Uri.parse('$baseUrl/admin-account'),
+      headers: _adminHeaders,
+      body: jsonEncode({
+        'userId': userId,
+        'action': action,
+        'newPin': ?newPin,
+      }),
+    );
+    return _parse(r);
+  }
+
+  Future<Map<String, dynamic>> adminGetBeneficiaries() async {
+    final r = await http.get(Uri.parse('$baseUrl/admin-beneficiaries'), headers: _adminHeaders);
     return _parse(r);
   }
 }

@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../state/app_state.dart';
 import 'main_shell.dart';
 import 'signup_screen.dart';
+import 'admin_login_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,12 +22,27 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePin = true;
   bool _isLoading = false;
   bool _hasError = false;
+  int _logoTapCount = 0;
+  DateTime? _lastLogoTap;
 
   @override
   void dispose() {
     _ktoController.dispose();
     _pinController.dispose();
     super.dispose();
+  }
+
+  void _onLogoTap() {
+    final now = DateTime.now();
+    if (_lastLogoTap != null && now.difference(_lastLogoTap!).inSeconds > 3) {
+      _logoTapCount = 0;
+    }
+    _lastLogoTap = now;
+    _logoTapCount++;
+    if (_logoTapCount >= 5) {
+      _logoTapCount = 0;
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminLoginScreen()));
+    }
   }
 
   Future<void> _anmelden() async {
@@ -86,9 +102,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Logo card
+                  // Logo card — tap 7× quickly to open admin panel
                   Center(
-                    child: Container(
+                    child: GestureDetector(
+                      onTap: _onLogoTap,
+                      child: Container(
                       width: logoW,
                       height: logoH,
                       decoration: BoxDecoration(
@@ -107,6 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         'assets/images/dkb_logo.png',
                         fit: BoxFit.contain,
                       ),
+                    ),
                     ),
                   ),
                   SizedBox(height: isShortScreen ? 8 : 14),
@@ -290,6 +309,26 @@ class _LoginScreenState extends State<LoginScreen> {
                                       style: GoogleFonts.inter(
                                         color: DkbColors.accent,
                                         fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 8),
+                                Center(
+                                  child: TextButton(
+                                    onPressed: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
+                                    ),
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    ),
+                                    child: Text(
+                                      'Verwaltung',
+                                      style: GoogleFonts.inter(
+                                        color: DkbColors.textMuted,
+                                        fontSize: 11,
                                       ),
                                     ),
                                   ),

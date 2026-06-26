@@ -16,6 +16,7 @@ model User {
   email       String?
   adresse     String?
   kundeSeit   DateTime  @default(now())
+  gesperrt    Boolean   @default(false)
 
   girokonto   Girokonto?
   visaKarte   VisaKarte?

@@ -6,6 +6,7 @@ import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/pin_aendern_screen.dart';
+import 'screens/admin_login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,6 +47,7 @@ class DkbApp extends StatelessWidget {
       routes: {
         '/login': (_) => const LoginScreen(),
         '/pin-aendern': (_) => const PinAendernScreen(),
+        '/admin': (_) => const AdminLoginScreen(),
       },
     );
   }
