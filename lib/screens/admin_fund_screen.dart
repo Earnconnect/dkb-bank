@@ -114,7 +114,10 @@ class _AdminFundScreenState extends State<AdminFundScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      _snack(e.toString(), isError: true);
+      final msg = e.toString().contains('Load failed') || e.toString().contains('SocketException')
+          ? 'Verbindungsfehler. Bitte prüfen Sie die Internetverbindung oder warten Sie auf den Aufbau des Servers.'
+          : e.toString();
+      _snack(msg, isError: true);
       setState(() => _submitting = false);
     }
   }

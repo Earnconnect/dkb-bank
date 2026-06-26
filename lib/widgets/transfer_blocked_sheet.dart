@@ -170,197 +170,248 @@ class _TransferBlockedSheetState extends State<TransferBlockedSheet>
   }
 
   Widget _buildBlocked() {
-    return Padding(
+    return Stack(
       key: const ValueKey('blocked'),
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header row: DKB logo + close
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Close button — absolute top-right
+        Positioned(
+          top: 12,
+          right: 8,
+          child: IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.close, color: DkbColors.textSecondary, size: 22),
+          ),
+        ),
+
+        SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // DKB logo — centered
               Container(
-                width: 110,
-                height: 56,
+                width: 120,
+                height: 60,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFE4E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 12,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 child: Image.asset('assets/images/dkb_logo.png', fit: BoxFit.contain),
               ),
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close, color: DkbColors.textSecondary),
-              ),
-            ],
-          ),
 
-          const SizedBox(height: 28),
+              const SizedBox(height: 28),
 
-          // Blocked icon
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: DkbColors.danger.withValues(alpha: 0.08),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.block_outlined, color: DkbColors.danger, size: 32),
-          ).animate().scale(begin: const Offset(0.6, 0.6), curve: Curves.elasticOut),
-
-          const SizedBox(height: 20),
-
-          Text(
-            'Überweisung nicht möglich',
-            style: GoogleFonts.inter(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: DkbColors.textPrimary,
-            ),
-          ).animate().fadeIn(delay: 150.ms),
-
-          const SizedBox(height: 10),
-
-          Text(
-            'Dieser Empfänger ist in Ihrem Online-Banking nicht als Begünstigter hinterlegt.',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              color: DkbColors.textSecondary,
-              height: 1.5,
-            ),
-          ).animate().fadeIn(delay: 200.ms),
-
-          const SizedBox(height: 20),
-
-          // Recipient card
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7F8FC),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE4E8F0)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: DkbColors.danger.withValues(alpha: 0.08),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.person_off_outlined,
-                      color: DkbColors.danger, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (widget.recipientName.isNotEmpty)
-                        Text(
-                          widget.recipientName,
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: DkbColors.textPrimary,
-                          ),
-                        ),
-                      Text(
-                        widget.iban,
-                        style: GoogleFonts.ibmPlexMono(
-                          fontSize: 12,
-                          color: DkbColors.textSecondary,
-                        ),
-                      ),
-                    ],
+              // Error icon — centered, large
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: DkbColors.danger.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: DkbColors.danger.withValues(alpha: 0.18),
+                    width: 2,
                   ),
                 ),
-              ],
-            ),
-          ).animate().fadeIn(delay: 250.ms),
+                child: const Icon(Icons.block_rounded, color: DkbColors.danger, size: 38),
+              )
+                  .animate()
+                  .scale(begin: const Offset(0.5, 0.5), curve: Curves.elasticOut)
+                  .fadeIn(),
 
-          const SizedBox(height: 16),
+              const SizedBox(height: 22),
 
-          // Info box
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: DkbColors.primary.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: DkbColors.primary.withValues(alpha: 0.12)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+              // Title — centered
+              Text(
+                'Überweisung nicht möglich',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: DkbColors.textPrimary,
+                  letterSpacing: -0.3,
+                ),
+              ).animate().fadeIn(delay: 150.ms),
+
+              const SizedBox(height: 10),
+
+              // Subtitle — centered
+              Text(
+                'Dieser Empfänger ist in Ihrem\nOnline-Banking nicht als Begünstigter hinterlegt.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: DkbColors.textSecondary,
+                  height: 1.55,
+                ),
+              ).animate().fadeIn(delay: 200.ms),
+
+              const SizedBox(height: 24),
+
+              // Recipient card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF7F8FC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE4E8F0)),
+                ),
+                child: Row(
                   children: [
-                    const Icon(Icons.info_outline, size: 15, color: DkbColors.primary),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Hinweis zur Sicherheit',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: DkbColors.primary,
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: DkbColors.danger.withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.person_off_outlined,
+                          color: DkbColors.danger, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (widget.recipientName.isNotEmpty)
+                            Text(
+                              widget.recipientName,
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: DkbColors.textPrimary,
+                              ),
+                            ),
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.iban,
+                            style: GoogleFonts.ibmPlexMono(
+                              fontSize: 12,
+                              color: DkbColors.textSecondary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: DkbColors.danger.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'NICHT\nVERIFIZIERT',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w800,
+                          color: DkbColors.danger,
+                          letterSpacing: 0.4,
+                          height: 1.4,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Aus Sicherheitsgründen sind Überweisungen ausschließlich an '
-                  'verifizierte Begünstigte möglich. Der Empfänger muss Inhaber '
-                  'eines DKB-Girokontos sein und einmalig mit seinen DKB-Zugangsdaten '
-                  'in Ihrem Online-Banking verknüpft werden.',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: DkbColors.textSecondary,
-                    height: 1.55,
+              ).animate().fadeIn(delay: 250.ms),
+
+              const SizedBox(height: 14),
+
+              // Info box
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: DkbColors.primary.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: DkbColors.primary.withValues(alpha: 0.12)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.shield_outlined, size: 15, color: DkbColors.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Hinweis zur Sicherheit',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: DkbColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Aus Sicherheitsgründen sind Überweisungen ausschließlich an '
+                      'verifizierte Begünstigte möglich. Der Empfänger muss Inhaber '
+                      'eines DKB-Girokontos sein und einmalig mit seinen DKB-Zugangsdaten '
+                      'in Ihrem Online-Banking verknüpft werden.',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: DkbColors.textSecondary,
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
+                ),
+              ).animate().fadeIn(delay: 300.ms),
+
+              const SizedBox(height: 28),
+
+              // CTA button
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  widget.onAddBeneficiary();
+                },
+                icon: const Icon(Icons.link_rounded, size: 18),
+                label: const Text('Empfänger jetzt verknüpfen'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 52),
+                  backgroundColor: DkbColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  textStyle: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ],
-            ),
-          ).animate().fadeIn(delay: 300.ms),
+              ).animate().fadeIn(delay: 380.ms).slideY(begin: 0.2, end: 0),
 
-          const Spacer(),
+              const SizedBox(height: 12),
 
-          // CTA
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
-              widget.onAddBeneficiary();
-            },
-            icon: const Icon(Icons.link, size: 18),
-            label: const Text('Empfänger jetzt verknüpfen'),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 52),
-              textStyle: GoogleFonts.inter(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ).animate().fadeIn(delay: 380.ms),
-
-          const SizedBox(height: 10),
-
-          Center(
-            child: TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Schließen',
-                style: GoogleFonts.inter(
-                  color: DkbColors.textSecondary,
-                  fontSize: 14,
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Schließen',
+                  style: GoogleFonts.inter(
+                    color: DkbColors.textSecondary,
+                    fontSize: 14,
+                  ),
                 ),
-              ),
-            ),
-          ).animate().fadeIn(delay: 420.ms),
-        ],
-      ),
+              ).animate().fadeIn(delay: 420.ms),
+
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
