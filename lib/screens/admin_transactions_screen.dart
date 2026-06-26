@@ -12,10 +12,11 @@ class AdminTransactionsScreen extends StatefulWidget {
 }
 
 class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> {
-  List<dynamic> _transactions = [];
+  List<dynamic> _all = [];
   bool _loading = true;
   String? _error;
   String _search = '';
+  String _filter = 'all'; // all | girokonto | visa | credit | debit
 
   @override
   void initState() {
@@ -29,16 +30,16 @@ class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> {
       _error = null;
     });
     try {
-      final result = await ApiService.instance.adminGetTransactions();
+      final res = await ApiService.instance.adminGetTransactions();
       if (!mounted) return;
-      if (result['statusCode'] == 200) {
+      if (res['statusCode'] == 200) {
         setState(() {
-          _transactions = result['transactions'] as List;
+          _all = res['transactions'] as List;
           _loading = false;
         });
       } else {
         setState(() {
-          _error = result['error'] as String? ?? 'Fehler beim Laden';
+          _error = res['error'] as String? ?? 'Fehler';
           _loading = false;
         });
       }
@@ -52,15 +53,25 @@ class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> {
   }
 
   List<dynamic> get _filtered {
-    if (_search.isEmpty) return _transactions;
-    final q = _search.toLowerCase();
-    return _transactions.where((t) {
-      final tx = t as Map<String, dynamic>;
-      return (tx['empfaenger'] as String? ?? '').toLowerCase().contains(q) ||
-          (tx['userName'] as String? ?? '').toLowerCase().contains(q) ||
-          (tx['userKontonummer'] as String? ?? '').contains(q) ||
-          (tx['kategorie'] as String? ?? '').toLowerCase().contains(q);
-    }).toList();
+    var list = _all;
+    if (_filter == 'girokonto') list = list.where((t) => (t as Map)['kontoTyp'] == 'girokonto').toList();
+    if (_filter == 'visa') list = list.where((t) => (t as Map)['kontoTyp'] == 'visa').toList();
+    if (_filter == 'credit') list = list.where((t) => ((t as Map)['betrag'] as num? ?? 0) > 0).toList();
+    if (_filter == 'debit') list = list.where((t) => ((t as Map)['betrag'] as num? ?? 0) < 0).toList();
+    if (_search.isNotEmpty) {
+      final q = _search.toLowerCase();
+      list = list.where((t) {
+        final m = t as Map<String, dynamic>;
+        return (m['empfaenger'] as String? ?? '').toLowerCase().contains(q) ||
+            (m['userName'] as String? ?? '').toLowerCase().contains(q) ||
+            (m['userKontonummer'] as String? ?? '').contains(q);
+      }).toList();
+    }
+    return list;
+  }
+
+  double get _totalFiltered {
+    return _filtered.fold(0.0, (sum, t) => sum + ((t as Map)['betrag'] as num? ?? 0).toDouble());
   }
 
   @override
@@ -68,16 +79,13 @@ class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> {
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
       return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline, color: DkbColors.danger, size: 44),
-            const SizedBox(height: 10),
-            Text(_error!, style: GoogleFonts.inter(color: DkbColors.danger, fontSize: 14)),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: _load, child: const Text('Erneut versuchen')),
-          ],
-        ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.error_outline, color: DkbColors.danger, size: 44),
+          const SizedBox(height: 10),
+          Text(_error!, style: GoogleFonts.inter(color: DkbColors.danger)),
+          const SizedBox(height: 16),
+          ElevatedButton(onPressed: _load, child: const Text('Erneut versuchen')),
+        ]),
       );
     }
 
@@ -85,167 +93,270 @@ class _AdminTransactionsScreenState extends State<AdminTransactionsScreen> {
 
     return Column(
       children: [
+        // ── Toolbar ──────────────────────────────────────────────────────
         Container(
           color: DkbColors.surface,
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: TextField(
-            onChanged: (v) => setState(() => _search = v),
-            decoration: InputDecoration(
-              hintText: 'Nutzer oder Empfänger suchen…',
-              prefixIcon: const Icon(Icons.search, size: 20),
-              suffixIcon: _search.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear, size: 18),
-                      onPressed: () => setState(() => _search = ''),
-                    )
-                  : null,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              filled: true,
-              fillColor: DkbColors.background,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(DkbRadius.sm),
-                borderSide: BorderSide.none,
-              ),
-            ),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: DkbColors.divider)),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-          child: Row(
+          child: Column(
             children: [
-              Text(
-                '${filtered.length} Transaktionen',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: DkbColors.textSecondary,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      onChanged: (v) => setState(() => _search = v),
+                      decoration: InputDecoration(
+                        hintText: 'Nutzer oder Empfänger suchen…',
+                        prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                        suffixIcon: _search.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear_rounded, size: 16),
+                                onPressed: () => setState(() => _search = ''),
+                              )
+                            : null,
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        filled: true,
+                        fillColor: DkbColors.background,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(DkbRadius.sm),
+                          borderSide: BorderSide.none,
+                        ),
+                        isDense: true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  _refreshBtn(),
+                ],
               ),
-              const Spacer(),
-              GestureDetector(
-                onTap: _load,
+              const SizedBox(height: 10),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    const Icon(Icons.refresh, size: 14, color: DkbColors.accent),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Aktualisieren',
-                      style: GoogleFonts.inter(fontSize: 12, color: DkbColors.accent),
-                    ),
+                    _chip('Alle', 'all'),
+                    const SizedBox(width: 6),
+                    _chip('Girokonto', 'girokonto'),
+                    const SizedBox(width: 6),
+                    _chip('Visa', 'visa'),
+                    const SizedBox(width: 6),
+                    _chip('Gutschriften', 'credit'),
+                    const SizedBox(width: 6),
+                    _chip('Belastungen', 'debit'),
                   ],
                 ),
               ),
             ],
           ),
         ),
+
+        // ── Summary bar ───────────────────────────────────────────────────
+        Container(
+          color: DkbColors.background,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              Text('${filtered.length} Einträge',
+                  style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: DkbColors.textSecondary)),
+              const Spacer(),
+              Text(
+                'Summe: ${NumberFormat.currency(locale: 'de_DE', symbol: '€').format(_totalFiltered)}',
+                style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: _totalFiltered >= 0 ? DkbColors.success : DkbColors.danger),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Transaction list ──────────────────────────────────────────────
         Expanded(
           child: RefreshIndicator(
             onRefresh: _load,
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-              itemCount: filtered.length,
-              itemBuilder: (_, i) {
-                final tx = filtered[i] as Map<String, dynamic>;
-                final betrag = (tx['betrag'] as num?)?.toDouble() ?? 0.0;
-                final isCredit = betrag > 0;
-                final date = DateTime.tryParse(tx['buchungsdatum'] as String? ?? '') ?? DateTime.now();
-                final kontoTyp = tx['kontoTyp'] as String? ?? 'girokonto';
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color: DkbColors.surface,
-                    borderRadius: BorderRadius.circular(DkbRadius.sm),
-                    border: Border.all(color: DkbColors.divider),
-                  ),
-                  child: Padding(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.receipt_long_outlined, size: 44, color: DkbColors.textMuted),
+                      const SizedBox(height: 8),
+                      Text('Keine Transaktionen',
+                          style: GoogleFonts.inter(color: DkbColors.textMuted)),
+                    ]),
+                  )
+                : ListView.builder(
                     padding: const EdgeInsets.all(12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: isCredit
-                                ? DkbColors.success.withValues(alpha: 0.1)
-                                : DkbColors.danger.withValues(alpha: 0.08),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            isCredit ? Icons.arrow_downward : Icons.arrow_upward,
-                            size: 18,
-                            color: isCredit ? DkbColors.success : DkbColors.danger,
-                          ),
+                    itemCount: filtered.length,
+                    itemBuilder: (_, i) {
+                      final tx = filtered[i] as Map<String, dynamic>;
+                      final betrag = (tx['betrag'] as num?)?.toDouble() ?? 0;
+                      final isCredit = betrag > 0;
+                      final date = DateTime.tryParse(
+                              tx['buchungsdatum'] as String? ?? '') ??
+                          DateTime.now();
+                      final kontoTyp = tx['kontoTyp'] as String? ?? '';
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 6),
+                        decoration: BoxDecoration(
+                          color: DkbColors.surface,
+                          borderRadius: BorderRadius.circular(DkbRadius.sm),
+                          border: Border.all(color: DkbColors.divider),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          child: Row(
                             children: [
-                              Text(
-                                tx['empfaenger'] as String? ?? '–',
-                                style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                  color: DkbColors.textPrimary,
+                              // Amount indicator circle
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: isCredit
+                                      ? DkbColors.success.withValues(alpha: 0.1)
+                                      : DkbColors.danger.withValues(alpha: 0.07),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  isCredit
+                                      ? Icons.arrow_downward_rounded
+                                      : Icons.arrow_upward_rounded,
+                                  size: 16,
+                                  color: isCredit ? DkbColors.success : DkbColors.danger,
                                 ),
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${tx['userName']}  ·  Kto. ${tx['userKontonummer']}',
-                                style: GoogleFonts.inter(fontSize: 11, color: DkbColors.textMuted),
-                              ),
-                              const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                    decoration: BoxDecoration(
-                                      color: kontoTyp == 'visa'
-                                          ? DkbColors.accent.withValues(alpha: 0.1)
-                                          : DkbColors.primary.withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      kontoTyp == 'visa' ? 'VISA' : 'GIRO',
+                              const SizedBox(width: 10),
+
+                              // Details
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      tx['empfaenger'] as String? ?? '–',
                                       style: GoogleFonts.inter(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w700,
-                                        color: kontoTyp == 'visa' ? DkbColors.accent : DkbColors.primary,
-                                        letterSpacing: 0.5,
-                                      ),
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                          color: DkbColors.textPrimary),
                                     ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    DateFormat('dd.MM.yy').format(date),
-                                    style: GoogleFonts.inter(fontSize: 11, color: DkbColors.textMuted),
-                                  ),
-                                ],
+                                    const SizedBox(height: 2),
+                                    Row(
+                                      children: [
+                                        _typePill(kontoTyp),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '${tx['userName']}',
+                                          style: GoogleFonts.inter(
+                                              fontSize: 11, color: DkbColors.textMuted),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text('·',
+                                            style: GoogleFonts.inter(
+                                                color: DkbColors.textMuted)),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          DateFormat('dd.MM.yy').format(date),
+                                          style: GoogleFonts.inter(
+                                              fontSize: 11, color: DkbColors.textMuted),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Amount
+                              Text(
+                                NumberFormat.currency(locale: 'de_DE', symbol: '€')
+                                    .format(betrag),
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: isCredit
+                                      ? DkbColors.success
+                                      : DkbColors.textPrimary,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        Text(
-                          _fmtEur(betrag),
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: isCredit ? DkbColors.success : DkbColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ),
       ],
     );
   }
 
-  String _fmtEur(double v) => NumberFormat.currency(locale: 'de_DE', symbol: '€').format(v);
+  Widget _chip(String label, String value) {
+    final active = _filter == value;
+    return GestureDetector(
+      onTap: () => setState(() => _filter = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: active ? DkbColors.primary : DkbColors.background,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+              color: active ? DkbColors.primary : DkbColors.divider),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+            color: active ? Colors.white : DkbColors.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _typePill(String type) {
+    final isVisa = type == 'visa';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(
+        color: isVisa
+            ? DkbColors.accent.withValues(alpha: 0.1)
+            : DkbColors.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        isVisa ? 'VISA' : 'GIRO',
+        style: GoogleFonts.inter(
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: isVisa ? DkbColors.accent : DkbColors.primary,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _refreshBtn() => Tooltip(
+        message: 'Aktualisieren',
+        child: InkWell(
+          onTap: _load,
+          borderRadius: BorderRadius.circular(DkbRadius.sm),
+          child: Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: DkbColors.background,
+              borderRadius: BorderRadius.circular(DkbRadius.sm),
+              border: Border.all(color: DkbColors.divider),
+            ),
+            child: const Icon(Icons.refresh_rounded, size: 18, color: DkbColors.textSecondary),
+          ),
+        ),
+      );
 }

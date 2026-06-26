@@ -278,4 +278,9 @@ class ApiService {
     final r = await http.get(Uri.parse('$baseUrl/admin-beneficiaries'), headers: _adminHeaders);
     return _parse(r);
   }
+
+  Future<Map<String, dynamic>> adminGetStats() async {
+    final r = await http.get(Uri.parse('$baseUrl/admin-stats'), headers: _adminHeaders);
+    return _parse(r);
+  }
 }

@@ -34,7 +34,21 @@ exports.handler = async (event) => {
       return respond(200, { message: `PIN von ${user.name} auf ${newPin} zurückgesetzt` });
     }
 
-    return respond(400, { error: 'Ungültige Aktion. Erlaubt: suspend, activate, reset-pin' });
+    if (action === 'freeze-card') {
+      const visa = await prisma.visaKarte.findFirst({ where: { userId } });
+      if (!visa) return respond(404, { error: 'Visa-Karte nicht gefunden' });
+      await prisma.visaKarte.update({ where: { id: visa.id }, data: { gesperrt: true } });
+      return respond(200, { message: `Karte von ${user.name} gesperrt` });
+    }
+
+    if (action === 'unfreeze-card') {
+      const visa = await prisma.visaKarte.findFirst({ where: { userId } });
+      if (!visa) return respond(404, { error: 'Visa-Karte nicht gefunden' });
+      await prisma.visaKarte.update({ where: { id: visa.id }, data: { gesperrt: false } });
+      return respond(200, { message: `Karte von ${user.name} entsperrt` });
+    }
+
+    return respond(400, { error: 'Ungültige Aktion. Erlaubt: suspend, activate, reset-pin, freeze-card, unfreeze-card' });
   } catch (e) {
     if (e.message === 'No token' || e.message === 'Not admin' || e.name === 'JsonWebTokenError') {
       return respond(401, { error: 'Nicht autorisiert' });
